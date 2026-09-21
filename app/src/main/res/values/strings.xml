@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">SubTracker</string>
+    <string name="widget_name">Upcoming subscriptions</string>
+    <string name="widget_description">Monthly total and your next charges</string>
+</resources>
