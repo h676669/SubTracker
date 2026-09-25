@@ -40,6 +40,10 @@ import com.subtracker.ui.daysLabel
 import com.subtracker.ui.kr
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
+import androidx.glance.material3.ColorProviders
+import com.subtracker.ui.Appearance
+import com.subtracker.ui.ThemeState
+import com.subtracker.ui.schemeFor
 
 class SubWidget : GlanceAppWidget() {
 
@@ -54,8 +58,19 @@ class SubWidget : GlanceAppWidget() {
         val openApp = Intent(context, MainActivity::class.java)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
 
+        // Match the theme chosen in the app (read straight from prefs).
+        val paletteId = ThemeState.paletteIdOf(context)
+        val appearance = ThemeState.appearanceOf(context)
+        val light = schemeFor(context, paletteId, dark = false)
+        val dark = schemeFor(context, paletteId, dark = true)
+        val colors = when (appearance) {
+            Appearance.LIGHT -> ColorProviders(light = light, dark = light)
+            Appearance.DARK -> ColorProviders(light = dark, dark = dark)
+            Appearance.SYSTEM -> ColorProviders(light = light, dark = dark)
+        }
+
         provideContent {
-            GlanceTheme { WidgetContent(monthly, upcoming, today, openApp) }
+            GlanceTheme(colors = colors) { WidgetContent(monthly, upcoming, today, openApp) }
         }
     }
 }

@@ -32,6 +32,10 @@ import androidx.lifecycle.lifecycleScope
 import com.subtracker.widget.SubWidget
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.IconButton
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalContext
 
 class MainActivity : ComponentActivity() {
     private val vm: SubViewModel by viewModels()
@@ -39,6 +43,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        ThemeState.load(this)
         setContent { SubTheme { App(vm) } }
     }
 
@@ -82,8 +87,25 @@ private fun MainScaffold(
     onTab: (Int) -> Unit,
     onOpen: (Long) -> Unit,
 ) {
+    val context = LocalContext.current
+    var showTheme by rememberSaveable { mutableStateOf(false) }
+
+    // Keep the widget in step with the chosen theme.
+    LaunchedEffect(ThemeState.paletteId, ThemeState.appearance) {
+        SubWidget().updateAll(context)
+    }
+
     Scaffold(
-        topBar = { TopAppBar(title = { Text(if (tab == 0) "Subscriptions" else "Calendar") }) },
+        topBar = {
+            TopAppBar(
+                title = { Text(if (tab == 0) "Subscriptions" else "Calendar") },
+                actions = {
+                    IconButton(onClick = { showTheme = true }) {
+                        Icon(Icons.Filled.Settings, contentDescription = "Theme")
+                    }
+                },
+            )
+        },
         floatingActionButton = {
             FloatingActionButton(onClick = { onOpen(0L) }) {
                 Icon(Icons.Filled.Add, contentDescription = "Add subscription")
@@ -110,4 +132,6 @@ private fun MainScaffold(
             else -> CalendarScreen(subs, today, onOpen = { onOpen(it.id) }, modifier = modifier)
         }
     }
+
+    if (showTheme) ThemePicker(onDismiss = { showTheme = false })
 }
