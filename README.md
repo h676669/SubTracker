@@ -6,7 +6,7 @@ A small native Android app for tracking subscriptions, with a calendar view and 
 - **Upcoming** tab: monthly/yearly totals, what's due in the next 30 days, and every subscription sorted by its next charge.
 - **Calendar** tab: month grid with coloured dots on charge days; tap a day to see what's charged.
 - **Charge dates roll forward automatically.** Enter any date you've been charged; weekly, monthly, quarterly, half-yearly and yearly cycles are supported (month-end dates such as the 31st stay on the last day of short months).
-- **Home-screen widget** (Jetpack Glance): monthly total plus the next 4 charges, highlighted in red when ≤ 3 days away. Tap it to open the app.
+- **Home-screen widget** (Jetpack Glance): monthly total plus the next charges (6 by default, 1–7 in Settings), highlighted in red when ≤ 3 days away. Tap it to open the app.
 - **Multi-currency.** Price a subscription in USD, EUR, GBP, SEK, DKK, CHF, PLN, JPY, CAD or AUD; totals convert to NOK using Norges Bank's open rates API (fetched once a day, cached on disk).
 - Statuses: Active, Trial, Paused, Cancelled (paused/cancelled are excluded from totals, calendar and widget).
 - Subscriptions are stored locally with Room. The only network call is the daily exchange-rate fetch; no subscription data leaves the phone.

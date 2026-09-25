@@ -20,12 +20,24 @@ object WidgetSettings {
     private const val PREFS = "widget"
     private const val KEY_TOTAL = "total"
     private const val KEY_PAYDAY = "payday"
+    private const val KEY_COUNT = "count"
     private const val DEFAULT_PAYDAY = 15
+    private const val DEFAULT_COUNT = 6
+
+    /**
+     * Glance allows 10 children per Column and the widget spends 3 on the headline,
+     * the rate caveat and a spacer, so 7 charge rows is the ceiling. Going over it
+     * throws at runtime, not compile time.
+     */
+    const val MAX_COUNT = 7
 
     var total by mutableStateOf(WidgetTotal.MONTHLY)
         private set
     /** Day of month (1-31); clamped to the last day in short months. */
     var payday by mutableIntStateOf(DEFAULT_PAYDAY)
+        private set
+    /** How many upcoming charges the widget lists (1..[MAX_COUNT]). */
+    var count by mutableIntStateOf(DEFAULT_COUNT)
         private set
 
     private fun prefs(context: Context) =
@@ -34,6 +46,7 @@ object WidgetSettings {
     fun load(context: Context) {
         total = totalOf(context)
         payday = paydayOf(context)
+        count = countOf(context)
     }
 
     fun setTotal(context: Context, value: WidgetTotal) {
@@ -46,6 +59,11 @@ object WidgetSettings {
         prefs(context).edit().putInt(KEY_PAYDAY, payday).apply()
     }
 
+    fun setCount(context: Context, value: Int) {
+        count = value.coerceIn(1, MAX_COUNT)
+        prefs(context).edit().putInt(KEY_COUNT, count).apply()
+    }
+
     /** Read straight from disk — used by the widget, which has no Compose state. */
     fun totalOf(context: Context): WidgetTotal =
         runCatching { WidgetTotal.valueOf(prefs(context).getString(KEY_TOTAL, "MONTHLY")!!) }
@@ -53,6 +71,9 @@ object WidgetSettings {
 
     fun paydayOf(context: Context): Int =
         prefs(context).getInt(KEY_PAYDAY, DEFAULT_PAYDAY).coerceIn(1, 31)
+
+    fun countOf(context: Context): Int =
+        prefs(context).getInt(KEY_COUNT, DEFAULT_COUNT).coerceIn(1, MAX_COUNT)
 }
 
 /** [day] of the given month, or its last day if the month is shorter. */

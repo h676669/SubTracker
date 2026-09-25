@@ -95,7 +95,13 @@ private fun MainScaffold(
     var showTheme by rememberSaveable { mutableStateOf(false) }
 
     // Keep the widget in step with the chosen theme and widget settings.
-    LaunchedEffect(ThemeState.paletteId, ThemeState.appearance, WidgetSettings.total, WidgetSettings.payday) {
+    LaunchedEffect(
+        ThemeState.paletteId,
+        ThemeState.appearance,
+        WidgetSettings.total,
+        WidgetSettings.payday,
+        WidgetSettings.count,
+    ) {
         SubWidget().updateAll(context)
     }
 

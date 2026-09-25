@@ -177,6 +177,25 @@ private fun WidgetSection() {
         }
     }
 
+    Spacer(Modifier.height(8.dp))
+    Text("Upcoming charges listed", style = MaterialTheme.typography.labelMedium)
+    Spacer(Modifier.height(4.dp))
+    // Scrolls because seven chips are wider than a dialog on a narrow phone.
+    LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        items((1..WidgetSettings.MAX_COUNT).toList()) { n ->
+            FilterChip(
+                selected = WidgetSettings.count == n,
+                onClick = { WidgetSettings.setCount(context, n) },
+                label = { Text(n.toString()) },
+            )
+        }
+    }
+    Text(
+        "Resize the widget on the home screen if the list doesn't fit.",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+
     if (WidgetSettings.total != WidgetTotal.MONTHLY) {
         val today = LocalDate.now()
         val end = periodEnd(WidgetSettings.total, today, WidgetSettings.payday)

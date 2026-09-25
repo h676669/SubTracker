@@ -59,7 +59,7 @@ class SubWidget : GlanceAppWidget() {
         val upcoming = active
             .mapNotNull { s -> s.nextCharge(today)?.let { s to it } }
             .sortedBy { it.second }
-            .take(4)
+            .take(WidgetSettings.countOf(context))
         val rates = Rates.ratesOf(context)
         val headline = headline(WidgetSettings.totalOf(context), WidgetSettings.paydayOf(context), active, rates, today)
         // A missing rate makes the headline understate the real total, so say so.
