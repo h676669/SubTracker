@@ -61,3 +61,11 @@ fun Subscription.monthlyCostNok(rates: Map<String, Double>): Double = monthlyCos
 /** Total charged in NOK for all charges in [from]..[to] (inclusive). */
 fun Subscription.costBetweenNok(from: LocalDate, to: LocalDate, rates: Map<String, Double>): Double =
     chargesBetween(from, to).size * priceNok(rates)
+
+/**
+ * True if any active subscription is priced in a currency [rates] doesn't cover.
+ * Those prices fall back to 1:1 (see [rate]), so every total is understated and
+ * the screen showing it must say so.
+ */
+fun List<Subscription>.missingRate(rates: Map<String, Double>): Boolean =
+    any { it.isActive && it.currency !in rates }

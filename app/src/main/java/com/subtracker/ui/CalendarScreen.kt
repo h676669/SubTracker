@@ -62,6 +62,11 @@ fun CalendarScreen(
     val ym = YearMonth.of(monthIndex / 12, monthIndex % 12 + 1)
     val first = ym.atDay(1)
     val last = ym.atEndOfMonth()
+    // The detail list has to describe a day that's actually in the grid, so a
+    // selection left behind by paging months falls back into the visible one.
+    val selected = LocalDate.ofEpochDay(selectedDay).takeIf { YearMonth.from(it) == ym }
+        ?: today.takeIf { YearMonth.from(it) == ym }
+        ?: first
 
     val byDay: Map<LocalDate, List<Subscription>> = remember(subs, ym) {
         subs.flatMap { s -> s.chargesBetween(first, last).map { it to s } }
@@ -121,7 +126,7 @@ fun CalendarScreen(
                             date = date,
                             charges = byDay[date].orEmpty(),
                             isToday = date == today,
-                            isSelected = date.toEpochDay() == selectedDay,
+                            isSelected = date == selected,
                             onClick = { selectedDay = date.toEpochDay() },
                             modifier = Modifier.weight(1f),
                         )
@@ -133,7 +138,7 @@ fun CalendarScreen(
         }
 
         Spacer(Modifier.height(16.dp))
-        val sel = LocalDate.ofEpochDay(selectedDay)
+        val sel = selected
         val charges = subs.filter { it.chargesBetween(sel, sel).isNotEmpty() }
         Text(sel.format(longDate), style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(8.dp))

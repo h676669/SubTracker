@@ -11,10 +11,19 @@ fun kr(value: Double): String =
     if (value % 1.0 == 0.0) String.format(norwegian, "%,.0f kr", value)
     else String.format(norwegian, "%,.2f kr", value)
 
-/** Formats an amount in its own currency. */
+/**
+ * Separators that suit each currency: "$9.99" is right and "$9,99" is not, while
+ * the European codes keep the Norwegian comma the rest of the app uses.
+ */
+private fun localeFor(currency: String): Locale = when (currency) {
+    "USD", "GBP", "JPY", "CAD", "AUD" -> Locale.ENGLISH
+    else -> norwegian
+}
+
+/** Formats an amount in its own currency. JPY has no minor unit. */
 fun money(value: Double, currency: String): String {
-    val n = if (value % 1.0 == 0.0) String.format(norwegian, "%,.0f", value)
-    else String.format(norwegian, "%,.2f", value)
+    val decimals = if (currency == "JPY" || value % 1.0 == 0.0) 0 else 2
+    val n = String.format(localeFor(currency), "%,.${decimals}f", value)
     return when (currency) {
         "NOK" -> "$n kr"
         "USD" -> "$$n"

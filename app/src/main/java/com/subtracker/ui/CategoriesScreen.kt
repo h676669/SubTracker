@@ -56,6 +56,7 @@ import com.subtracker.data.Rates
 import com.subtracker.data.Status
 import com.subtracker.data.Subscription
 import com.subtracker.data.isActive
+import com.subtracker.data.missingRate
 import com.subtracker.data.monthlyCostNok
 
 private const val UNCATEGORISED = "Uncategorised"
@@ -127,6 +128,13 @@ fun CategoriesScreen(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                    if (subs.missingRate(rates)) {
+                        Text(
+                            UNCONVERTED_WARNING,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    }
                 }
             }
         }

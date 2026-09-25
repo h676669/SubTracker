@@ -35,6 +35,7 @@ import com.subtracker.data.Subscription
 import com.subtracker.data.Rates
 import com.subtracker.data.costBetweenNok
 import com.subtracker.data.isActive
+import com.subtracker.data.missingRate
 import com.subtracker.data.monthlyCostNok
 import com.subtracker.data.nextCharge
 import androidx.glance.material3.ColorProviders
@@ -61,6 +62,8 @@ class SubWidget : GlanceAppWidget() {
             .take(4)
         val rates = Rates.ratesOf(context)
         val headline = headline(WidgetSettings.totalOf(context), WidgetSettings.paydayOf(context), active, rates, today)
+        // A missing rate makes the headline understate the real total, so say so.
+        val unconverted = active.missingRate(rates)
         val openApp = Intent(context, MainActivity::class.java)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
 
@@ -76,7 +79,7 @@ class SubWidget : GlanceAppWidget() {
         }
 
         provideContent {
-            GlanceTheme(colors = colors) { WidgetContent(headline, upcoming, today, openApp) }
+            GlanceTheme(colors = colors) { WidgetContent(headline, unconverted, upcoming, today, openApp) }
         }
     }
 }
@@ -115,6 +118,7 @@ class SubWidgetReceiver : GlanceAppWidgetReceiver() {
 @Composable
 private fun WidgetContent(
     headline: Headline,
+    unconverted: Boolean,
     upcoming: List<Pair<Subscription, LocalDate>>,
     today: LocalDate,
     openApp: Intent,
@@ -137,6 +141,13 @@ private fun WidgetContent(
             Text(
                 headline.amount,
                 style = TextStyle(color = GlanceTheme.colors.primary, fontSize = 14.sp, fontWeight = FontWeight.Bold),
+            )
+        }
+        if (unconverted) {
+            Text(
+                "No exchange rates — total understated",
+                maxLines = 1,
+                style = TextStyle(color = GlanceTheme.colors.error, fontSize = 11.sp),
             )
         }
         Spacer(GlanceModifier.height(6.dp))

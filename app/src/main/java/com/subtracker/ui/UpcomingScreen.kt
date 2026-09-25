@@ -32,13 +32,18 @@ import androidx.compose.ui.unit.dp
 import com.subtracker.data.Rates
 import com.subtracker.data.Status
 import com.subtracker.data.Subscription
-import com.subtracker.data.chargesBetween
+import com.subtracker.data.costBetweenNok
 import com.subtracker.data.isActive
+import com.subtracker.data.missingRate
 import com.subtracker.data.monthlyCostNok
 import com.subtracker.data.priceNok
 import com.subtracker.data.nextCharge
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
+
+/** Shown wherever a NOK total silently leaves out unconverted foreign prices. */
+const val UNCONVERTED_WARNING =
+    "No exchange rates yet — foreign prices count as 1:1, so totals are understated"
 
 @Composable
 fun UpcomingScreen(
@@ -74,8 +79,10 @@ fun UpcomingScreen(
 private fun SummaryCard(active: List<Subscription>, today: LocalDate) {
     val rates = Rates.rates
     val monthly = active.sumOf { it.monthlyCostNok(rates) }
-    val next30 = active.sumOf { s ->
-        s.chargesBetween(today, today.plusDays(30)).size * s.priceNok(rates)
+    // One calendar month, not 30 days: a fixed day count is longer than a short
+    // month and would charge a monthly subscription twice (Feb 1 + 30d = Mar 2).
+    val comingMonth = active.sumOf { s ->
+        s.costBetweenNok(today, today.plusMonths(1).minusDays(1), rates)
     }
     ElevatedCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(20.dp)) {
@@ -89,17 +96,22 @@ private fun SummaryCard(active: List<Subscription>, today: LocalDate) {
             Spacer(Modifier.padding(4.dp))
             Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
                 Stat("Per year", kr(monthly * 12))
-                Stat("Next 30 days", kr(next30))
+                Stat("Coming month", kr(comingMonth))
                 Stat("Active", active.size.toString())
             }
             val updated = Rates.lastUpdated
+            val unconverted = active.missingRate(rates)
             if (active.any { it.currency != "NOK" }) {
                 Spacer(Modifier.padding(4.dp))
                 Text(
-                    if (updated != null) "Converted with Norges Bank rates, ${updated.format(shortDate)}"
-                    else "Waiting for exchange rates — showing NOK amounts only",
+                    when {
+                        unconverted -> UNCONVERTED_WARNING
+                        updated != null -> "Converted with Norges Bank rates from ${updated.format(shortDate)}"
+                        else -> "Converted with Norges Bank rates"
+                    },
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = if (unconverted) MaterialTheme.colorScheme.error
+                    else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
