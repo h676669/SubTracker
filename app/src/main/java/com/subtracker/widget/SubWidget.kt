@@ -6,15 +6,22 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.glance.ColorFilter
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
+import androidx.glance.Image
+import androidx.glance.ImageProvider
+import androidx.glance.action.ActionParameters
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
+import androidx.glance.appwidget.action.ActionCallback
+import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.action.actionStartActivity
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.provideContent
+import androidx.glance.appwidget.updateAll
 import androidx.glance.background
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
@@ -30,6 +37,7 @@ import androidx.glance.layout.width
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
+import com.subtracker.R
 import com.subtracker.data.AppDatabase
 import com.subtracker.data.Subscription
 import com.subtracker.data.Rates
@@ -114,6 +122,17 @@ class SubWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = SubWidget()
 }
 
+/**
+ * Re-renders the widget on demand. Everything it shows is read fresh in
+ * [SubWidget.provideGlance], so this picks up setting, theme and subscription
+ * changes without waiting for the ~6 hour update interval.
+ */
+class RefreshAction : ActionCallback {
+    override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
+        SubWidget().updateAll(context)
+    }
+}
+
 // Glance rows/columns allow at most 10 children, so rows use padding instead of spacers.
 @Composable
 private fun WidgetContent(
@@ -142,6 +161,23 @@ private fun WidgetContent(
                 headline.amount,
                 style = TextStyle(color = GlanceTheme.colors.primary, fontSize = 14.sp, fontWeight = FontWeight.Bold),
             )
+            Spacer(GlanceModifier.width(8.dp))
+            // Its own clickable, so tapping it refreshes instead of opening the app.
+            Box(
+                modifier = GlanceModifier
+                    .size(26.dp)
+                    .cornerRadius(13.dp)
+                    .background(GlanceTheme.colors.secondaryContainer)
+                    .clickable(actionRunCallback<RefreshAction>()),
+                contentAlignment = Alignment.Center,
+            ) {
+                Image(
+                    provider = ImageProvider(R.drawable.ic_refresh),
+                    contentDescription = "Refresh",
+                    modifier = GlanceModifier.size(15.dp),
+                    colorFilter = ColorFilter.tint(GlanceTheme.colors.onSecondaryContainer),
+                )
+            }
         }
         if (unconverted) {
             Text(
