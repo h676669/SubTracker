@@ -56,9 +56,11 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.subtracker.data.Cycle
+import com.subtracker.data.Rates
 import com.subtracker.data.Status
 import com.subtracker.data.Subscription
 import com.subtracker.data.nextCharge
+import com.subtracker.data.priceNok
 import java.time.LocalDate
 
 private const val DAY_MS = 86_400_000L
@@ -79,6 +81,7 @@ fun EditScreen(
 ) {
     var name by rememberSaveable { mutableStateOf(initial?.name ?: "") }
     var price by rememberSaveable { mutableStateOf(initial?.price?.let(::plain) ?: "") }
+    var currency by rememberSaveable { mutableStateOf(initial?.currency ?: "NOK") }
     var cycle by rememberSaveable { mutableStateOf(initial?.cycle ?: Cycle.MONTHLY) }
     var anchor by rememberSaveable { mutableLongStateOf(initial?.anchorEpochDay ?: LocalDate.now().toEpochDay()) }
     var category by rememberSaveable { mutableStateOf(initial?.category ?: "") }
@@ -96,6 +99,7 @@ fun EditScreen(
         name = name.trim(),
         category = category.trim(),
         price = priceValue ?: 0.0,
+        currency = currency,
         cycle = cycle,
         anchorEpochDay = anchor,
         status = status,
@@ -134,12 +138,24 @@ fun EditScreen(
             )
             OutlinedTextField(
                 value = price, onValueChange = { price = it },
-                label = { Text(if (cycle == Cycle.WEEKLY) "Price per week (kr)" else "Price per charge (kr)") },
+                label = { Text(if (cycle == Cycle.WEEKLY) "Price per week" else "Price per charge") },
                 singleLine = true,
                 isError = price.isNotBlank() && priceValue == null,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 modifier = Modifier.fillMaxWidth(),
             )
+
+            Label("Currency")
+            ChipRow(Rates.currencies, currency, { it }) { currency = it }
+            if (currency != "NOK" && priceValue != null) {
+                val nok = build().priceNok(Rates.rates)
+                Text(
+                    if (Rates.rates.containsKey(currency)) "≈ ${kr(nok)} per charge"
+                    else "No exchange rate yet — connect to the internet to convert",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
 
             Label("Billing cycle")
             ChipRow(Cycle.entries, cycle, { it.label }) { cycle = it }

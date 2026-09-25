@@ -23,8 +23,10 @@ data class Subscription(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
     val category: String,
-    /** Amount charged each billing cycle, in NOK. */
+    /** Amount charged each billing cycle, in [currency]. */
     val price: Double,
+    /** ISO code the price is charged in; converted to NOK for all totals. */
+    val currency: String = "NOK",
     val cycle: Cycle,
     /** Any known charge date (epoch day). Future charges are derived from it. */
     val anchorEpochDay: Long,

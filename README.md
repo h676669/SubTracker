@@ -7,8 +7,9 @@ A small native Android app for tracking subscriptions, with a calendar view and 
 - **Calendar** tab: month grid with coloured dots on charge days; tap a day to see what's charged.
 - **Charge dates roll forward automatically.** Enter any date you've been charged; weekly, monthly, quarterly, half-yearly and yearly cycles are supported (month-end dates such as the 31st stay on the last day of short months).
 - **Home-screen widget** (Jetpack Glance): monthly total plus the next 4 charges, highlighted in red when ≤ 3 days away. Tap it to open the app.
+- **Multi-currency.** Price a subscription in USD, EUR, GBP, SEK, DKK, CHF, PLN, JPY, CAD or AUD; totals convert to NOK using Norges Bank's open rates API (fetched once a day, cached on disk).
 - Statuses: Active, Trial, Paused, Cancelled (paused/cancelled are excluded from totals, calendar and widget).
-- Data is stored locally with Room. Nothing leaves the phone.
+- Subscriptions are stored locally with Room. The only network call is the daily exchange-rate fetch; no subscription data leaves the phone.
 
 ## Build & install
 1. Unzip and open the `SubTracker` folder in Android Studio (File → Open).
@@ -17,11 +18,11 @@ A small native Android app for tracking subscriptions, with a calendar view and 
 4. Long-press the home screen → Widgets → **SubTracker** → drag *Upcoming subscriptions* onto the screen.
 
 ## Stack
-Kotlin 2.0 · Jetpack Compose (Material 3, dynamic colour) · Room · Glance 1.1 · minSdk 26
+Kotlin 2.2 · Jetpack Compose (Material 3, dynamic colour) · Room · Glance 1.1 · AGP 9.4 · minSdk 26
 
 ## Structure
 ```
-data/    Subscription entity, DAO, database, Billing.kt (all date maths)
+data/    Subscription entity, DAO, database, Billing.kt (all date maths), Rates.kt (currency)
 ui/      MainActivity, Upcoming/Calendar/Edit screens, ViewModel, theme, formatting
 widget/  Glance widget + receiver
 ```

@@ -50,3 +50,10 @@ fun Subscription.chargesBetween(from: LocalDate, to: LocalDate): List<LocalDate>
     }
     return out
 }
+
+/** NOK per one unit of this subscription's currency (1.0 if unknown). */
+fun Subscription.rate(rates: Map<String, Double>): Double = rates[currency] ?: 1.0
+
+fun Subscription.priceNok(rates: Map<String, Double>): Double = price * rate(rates)
+
+fun Subscription.monthlyCostNok(rates: Map<String, Double>): Double = monthlyCost * rate(rates)

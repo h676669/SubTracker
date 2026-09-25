@@ -29,11 +29,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.subtracker.data.Rates
 import com.subtracker.data.Status
 import com.subtracker.data.Subscription
 import com.subtracker.data.chargesBetween
 import com.subtracker.data.isActive
-import com.subtracker.data.monthlyCost
+import com.subtracker.data.monthlyCostNok
+import com.subtracker.data.priceNok
 import com.subtracker.data.nextCharge
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
@@ -70,8 +72,11 @@ fun UpcomingScreen(
 
 @Composable
 private fun SummaryCard(active: List<Subscription>, today: LocalDate) {
-    val monthly = active.sumOf { it.monthlyCost }
-    val next30 = active.sumOf { s -> s.chargesBetween(today, today.plusDays(30)).size * s.price }
+    val rates = Rates.rates
+    val monthly = active.sumOf { it.monthlyCostNok(rates) }
+    val next30 = active.sumOf { s ->
+        s.chargesBetween(today, today.plusDays(30)).size * s.priceNok(rates)
+    }
     ElevatedCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(20.dp)) {
             Text("Per month", style = MaterialTheme.typography.labelLarge)
@@ -86,6 +91,16 @@ private fun SummaryCard(active: List<Subscription>, today: LocalDate) {
                 Stat("Per year", kr(monthly * 12))
                 Stat("Next 30 days", kr(next30))
                 Stat("Active", active.size.toString())
+            }
+            val updated = Rates.lastUpdated
+            if (active.any { it.currency != "NOK" }) {
+                Spacer(Modifier.padding(4.dp))
+                Text(
+                    if (updated != null) "Converted with Norges Bank rates, ${updated.format(shortDate)}"
+                    else "Waiting for exchange rates — showing NOK amounts only",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         }
     }
@@ -115,8 +130,10 @@ private fun SubRow(s: Subscription, today: LocalDate, onOpen: (Subscription) -> 
                     textDecoration = if (s.status == Status.CANCELLED) TextDecoration.LineThrough else null,
                 )
                 val extra = if (s.category.isNotBlank()) " · ${s.category}" else ""
+                val converted =
+                    if (s.currency != "NOK") " (≈ ${kr(s.priceNok(Rates.rates))})" else ""
                 Text(
-                    "${kr(s.price)} ${s.cycle.label.lowercase()}$extra",
+                    "${money(s.price, s.currency)}$converted ${s.cycle.label.lowercase()}$extra",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

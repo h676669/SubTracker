@@ -40,7 +40,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.subtracker.data.Rates
 import com.subtracker.data.Subscription
+import com.subtracker.data.priceNok
 import com.subtracker.data.chargesBetween
 import java.time.LocalDate
 import java.time.YearMonth
@@ -65,7 +67,8 @@ fun CalendarScreen(
         subs.flatMap { s -> s.chargesBetween(first, last).map { it to s } }
             .groupBy({ it.first }, { it.second })
     }
-    val monthTotal = byDay.values.sumOf { list -> list.sumOf { it.price } }
+    val rates = Rates.rates
+    val monthTotal = byDay.values.sumOf { list -> list.sumOf { it.priceNok(rates) } }
 
     Column(
         modifier
@@ -153,7 +156,7 @@ fun CalendarScreen(
                         Box(Modifier.size(12.dp).clip(CircleShape).background(Color(s.color)))
                         Spacer(Modifier.width(12.dp))
                         Text(s.name, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-                        Text(kr(s.price), style = MaterialTheme.typography.titleMedium)
+                        Text(money(s.price, s.currency), style = MaterialTheme.typography.titleMedium)
                     }
                 }
             }

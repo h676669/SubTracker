@@ -13,15 +13,14 @@ object ThemeState {
     private const val KEY_PALETTE = "palette"
     private const val KEY_APPEARANCE = "appearance"
 
-    const val DEFAULT_PALETTE = "blue"
-
     /** "wallpaper" = Material You colours from the wallpaper (Android 12+). */
-    const val WALLPAPER = "wallpaper"
-
     var paletteId by mutableStateOf(DEFAULT_PALETTE)
         private set
     var appearance by mutableStateOf(Appearance.SYSTEM)
         private set
+
+    const val DEFAULT_PALETTE = "blue"
+    const val WALLPAPER = "wallpaper"
 
     private fun prefs(context: Context) =
         context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)

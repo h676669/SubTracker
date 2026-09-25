@@ -32,18 +32,20 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import com.subtracker.data.AppDatabase
 import com.subtracker.data.Subscription
+import com.subtracker.data.Rates
 import com.subtracker.data.isActive
-import com.subtracker.data.monthlyCost
+import com.subtracker.data.monthlyCostNok
 import com.subtracker.data.nextCharge
-import com.subtracker.ui.MainActivity
-import com.subtracker.ui.daysLabel
-import com.subtracker.ui.kr
-import java.time.LocalDate
-import java.time.temporal.ChronoUnit
 import androidx.glance.material3.ColorProviders
 import com.subtracker.ui.Appearance
+import com.subtracker.ui.MainActivity
 import com.subtracker.ui.ThemeState
 import com.subtracker.ui.schemeFor
+import com.subtracker.ui.daysLabel
+import com.subtracker.ui.kr
+import com.subtracker.ui.money
+import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 
 class SubWidget : GlanceAppWidget() {
 
@@ -54,7 +56,8 @@ class SubWidget : GlanceAppWidget() {
             .mapNotNull { s -> s.nextCharge(today)?.let { s to it } }
             .sortedBy { it.second }
             .take(4)
-        val monthly = active.sumOf { it.monthlyCost }
+        val rates = Rates.ratesOf(context)
+        val monthly = active.sumOf { it.monthlyCostNok(rates) }
         val openApp = Intent(context, MainActivity::class.java)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
 
@@ -131,7 +134,7 @@ private fun WidgetContent(
                     modifier = GlanceModifier.defaultWeight(),
                 )
                 Text(
-                    "${kr(sub.price)} · ${daysLabel(date, today)}",
+                    "${money(sub.price, sub.currency)} · ${daysLabel(date, today)}",
                     style = TextStyle(
                         color = if (soon) GlanceTheme.colors.error else GlanceTheme.colors.onSurfaceVariant,
                         fontSize = 12.sp,
