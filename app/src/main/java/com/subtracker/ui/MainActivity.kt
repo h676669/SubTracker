@@ -34,6 +34,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.glance.appwidget.updateAll
 import androidx.lifecycle.lifecycleScope
 import com.subtracker.widget.SubWidget
+import com.subtracker.widget.WidgetSettings
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
@@ -44,6 +45,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         ThemeState.load(this)
+        WidgetSettings.load(this)
+        Tags.load(this)
         setContent { SubTheme { App(vm) } }
     }
 
@@ -69,6 +72,7 @@ private fun App(vm: SubViewModel) {
         EditScreen(
             id = openId,
             initial = subs.find { it.id == openId },
+            tags = Tags.all(subs),
             onSave = { vm.save(it); editorId = null },
             onDelete = { vm.delete(it); editorId = null },
             onClose = { editorId = null },
@@ -90,18 +94,26 @@ private fun MainScaffold(
     val context = LocalContext.current
     var showTheme by rememberSaveable { mutableStateOf(false) }
 
-    // Keep the widget in step with the chosen theme.
-    LaunchedEffect(ThemeState.paletteId, ThemeState.appearance) {
+    // Keep the widget in step with the chosen theme and widget settings.
+    LaunchedEffect(ThemeState.paletteId, ThemeState.appearance, WidgetSettings.total, WidgetSettings.payday) {
         SubWidget().updateAll(context)
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (tab == 0) "Subscriptions" else "Calendar") },
+                title = {
+                    Text(
+                        when (tab) {
+                            0 -> "Subscriptions"
+                            1 -> "Calendar"
+                            else -> "Categories"
+                        },
+                    )
+                },
                 actions = {
                     IconButton(onClick = { showTheme = true }) {
-                        Icon(Icons.Filled.Settings, contentDescription = "Theme")
+                        Icon(Icons.Filled.Settings, contentDescription = "Settings")
                     }
                 },
             )
@@ -123,13 +135,19 @@ private fun MainScaffold(
                     icon = { Icon(Icons.Filled.DateRange, null) },
                     label = { Text("Calendar") },
                 )
+                NavigationBarItem(
+                    selected = tab == 2, onClick = { onTab(2) },
+                    icon = { Icon(TagIcon, null) },
+                    label = { Text("Categories") },
+                )
             }
         },
     ) { padding ->
         val modifier = Modifier.padding(padding)
         when (tab) {
             0 -> UpcomingScreen(subs, today, onOpen = { onOpen(it.id) }, modifier = modifier)
-            else -> CalendarScreen(subs, today, onOpen = { onOpen(it.id) }, modifier = modifier)
+            1 -> CalendarScreen(subs, today, onOpen = { onOpen(it.id) }, modifier = modifier)
+            else -> CategoriesScreen(subs, onOpen = { onOpen(it.id) }, modifier = modifier)
         }
     }
 

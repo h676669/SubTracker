@@ -33,6 +33,7 @@ import androidx.glance.text.TextStyle
 import com.subtracker.data.AppDatabase
 import com.subtracker.data.Subscription
 import com.subtracker.data.Rates
+import com.subtracker.data.costBetweenNok
 import com.subtracker.data.isActive
 import com.subtracker.data.monthlyCostNok
 import com.subtracker.data.nextCharge
@@ -45,7 +46,9 @@ import com.subtracker.ui.daysLabel
 import com.subtracker.ui.kr
 import com.subtracker.ui.money
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
+import java.util.Locale
 
 class SubWidget : GlanceAppWidget() {
 
@@ -57,7 +60,7 @@ class SubWidget : GlanceAppWidget() {
             .sortedBy { it.second }
             .take(4)
         val rates = Rates.ratesOf(context)
-        val monthly = active.sumOf { it.monthlyCostNok(rates) }
+        val headline = headline(WidgetSettings.totalOf(context), WidgetSettings.paydayOf(context), active, rates, today)
         val openApp = Intent(context, MainActivity::class.java)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
 
@@ -73,9 +76,35 @@ class SubWidget : GlanceAppWidget() {
         }
 
         provideContent {
-            GlanceTheme(colors = colors) { WidgetContent(monthly, upcoming, today, openApp) }
+            GlanceTheme(colors = colors) { WidgetContent(headline, upcoming, today, openApp) }
         }
     }
+}
+
+/** Label and amount for the widget's top row. */
+private data class Headline(val label: String, val amount: String)
+
+private val monthName = DateTimeFormatter.ofPattern("MMMM", Locale.ENGLISH)
+private val paydayDate = DateTimeFormatter.ofPattern("d MMM", Locale.ENGLISH)
+
+private fun headline(
+    total: WidgetTotal,
+    payday: Int,
+    active: List<Subscription>,
+    rates: Map<String, Double>,
+    today: LocalDate,
+): Headline {
+    if (total == WidgetTotal.MONTHLY) {
+        return Headline("Subscriptions", "${kr(active.sumOf { it.monthlyCostNok(rates) })}/mo")
+    }
+    val end = periodEnd(total, today, payday)
+    val left = active.sumOf { it.costBetweenNok(today, end, rates) }
+    val label = if (total == WidgetTotal.PAYDAY) {
+        "Left before ${nextPayday(today, payday).format(paydayDate)}"
+    } else {
+        "Left in ${today.format(monthName)}"
+    }
+    return Headline(label, kr(left))
 }
 
 class SubWidgetReceiver : GlanceAppWidgetReceiver() {
@@ -85,7 +114,7 @@ class SubWidgetReceiver : GlanceAppWidgetReceiver() {
 // Glance rows/columns allow at most 10 children, so rows use padding instead of spacers.
 @Composable
 private fun WidgetContent(
-    monthly: Double,
+    headline: Headline,
     upcoming: List<Pair<Subscription, LocalDate>>,
     today: LocalDate,
     openApp: Intent,
@@ -100,12 +129,13 @@ private fun WidgetContent(
     ) {
         Row(modifier = GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(
-                "Subscriptions",
+                headline.label,
+                maxLines = 1,
                 style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = 12.sp),
                 modifier = GlanceModifier.defaultWeight(),
             )
             Text(
-                "${kr(monthly)}/mo",
+                headline.amount,
                 style = TextStyle(color = GlanceTheme.colors.primary, fontSize = 14.sp, fontWeight = FontWeight.Bold),
             )
         }

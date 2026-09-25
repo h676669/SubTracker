@@ -15,7 +15,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.AlertDialog
@@ -23,6 +29,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -31,18 +38,26 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.subtracker.widget.WidgetSettings
+import com.subtracker.widget.WidgetTotal
+import com.subtracker.widget.nextPayday
+import com.subtracker.widget.periodEnd
+import java.time.LocalDate
 
 @Composable
 fun ThemePicker(onDismiss: () -> Unit) {
     val context = LocalContext.current
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Appearance") },
+        title = { Text("Settings") },
         confirmButton = { TextButton(onClick = onDismiss) { Text("Done") } },
         text = {
-            Column {
+            Column(Modifier.verticalScroll(rememberScrollState())) {
+                Text("Appearance", style = MaterialTheme.typography.labelLarge)
+                Spacer(Modifier.height(8.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Appearance.entries.forEach { option ->
                         FilterChip(
@@ -77,6 +92,9 @@ fun ThemePicker(onDismiss: () -> Unit) {
                         repeat(4 - row.size) { Spacer(Modifier.weight(1f)) }
                     }
                 }
+
+                Spacer(Modifier.height(8.dp))
+                WidgetSection()
             }
         },
     )
@@ -117,6 +135,62 @@ private fun Swatch(
             style = MaterialTheme.typography.labelSmall,
             textAlign = TextAlign.Center,
             maxLines = 1,
+        )
+    }
+}
+
+@Composable
+private fun WidgetSection() {
+    val context = LocalContext.current
+    Text("Widget shows", style = MaterialTheme.typography.labelLarge)
+    Spacer(Modifier.height(4.dp))
+    WidgetTotal.entries.forEach { option ->
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .selectable(
+                    selected = WidgetSettings.total == option,
+                    onClick = { WidgetSettings.setTotal(context, option) },
+                    role = Role.RadioButton,
+                ),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            RadioButton(selected = WidgetSettings.total == option, onClick = null)
+            Spacer(Modifier.width(8.dp))
+            Text(option.label, style = MaterialTheme.typography.bodyMedium)
+        }
+    }
+
+    if (WidgetSettings.total == WidgetTotal.PAYDAY) {
+        Spacer(Modifier.height(8.dp))
+        Text("Payday (day of month)", style = MaterialTheme.typography.labelMedium)
+        Spacer(Modifier.height(4.dp))
+        val listState = rememberLazyListState(initialFirstVisibleItemIndex = (WidgetSettings.payday - 3).coerceAtLeast(0))
+        LazyRow(state = listState, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            items((1..31).toList()) { day ->
+                FilterChip(
+                    selected = WidgetSettings.payday == day,
+                    onClick = { WidgetSettings.setPayday(context, day) },
+                    label = { Text(day.toString()) },
+                )
+            }
+        }
+    }
+
+    if (WidgetSettings.total != WidgetTotal.MONTHLY) {
+        val today = LocalDate.now()
+        val end = periodEnd(WidgetSettings.total, today, WidgetSettings.payday)
+        Spacer(Modifier.height(4.dp))
+        Text(
+            buildString {
+                append("Counts charges from today through ${end.format(shortDate)}")
+                if (WidgetSettings.total == WidgetTotal.PAYDAY) {
+                    append(". Next payday: ${nextPayday(today, WidgetSettings.payday).format(shortDate)}")
+                }
+                append(".")
+            },
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }

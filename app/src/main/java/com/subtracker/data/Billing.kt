@@ -57,3 +57,7 @@ fun Subscription.rate(rates: Map<String, Double>): Double = rates[currency] ?: 1
 fun Subscription.priceNok(rates: Map<String, Double>): Double = price * rate(rates)
 
 fun Subscription.monthlyCostNok(rates: Map<String, Double>): Double = monthlyCost * rate(rates)
+
+/** Total charged in NOK for all charges in [from]..[to] (inclusive). */
+fun Subscription.costBetweenNok(from: LocalDate, to: LocalDate, rates: Map<String, Double>): Double =
+    chargesBetween(from, to).size * priceNok(rates)

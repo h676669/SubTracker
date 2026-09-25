@@ -48,8 +48,3 @@ val palette: List<Long> = listOf(
     0xFFFFC107, // amber
     0xFF795548, // brown
 )
-
-val categorySuggestions = listOf(
-    "Streaming", "Music", "Gaming", "Software", "Cloud storage",
-    "Lotteri/spill", "News", "Fitness", "Phone & internet", "Insurance", "Other",
-)

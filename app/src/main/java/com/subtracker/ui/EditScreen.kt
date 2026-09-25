@@ -70,11 +70,13 @@ private fun plain(v: Double): String = if (v % 1.0 == 0.0) v.toLong().toString()
 /**
  * @param id 0 for a new subscription, otherwise the id being edited (kept even if
  *           [initial] hasn't loaded yet, so saving never creates a duplicate).
+ * @param tags category tags to offer; a new one typed here is saved as a tag on save.
  */
 @Composable
 fun EditScreen(
     id: Long,
     initial: Subscription?,
+    tags: List<String>,
     onSave: (Subscription) -> Unit,
     onDelete: (Subscription) -> Unit,
     onClose: () -> Unit,
@@ -97,7 +99,7 @@ fun EditScreen(
     fun build() = Subscription(
         id = id,
         name = name.trim(),
-        category = category.trim(),
+        category = Tags.canonical(category, tags),
         price = priceValue ?: 0.0,
         currency = currency,
         cycle = cycle,
@@ -183,9 +185,17 @@ fun EditScreen(
             OutlinedTextField(
                 value = category, onValueChange = { category = it },
                 label = { Text("Category") }, singleLine = true,
+                supportingText = {
+                    if (category.isNotBlank() && tags.none { it.equals(category.trim(), ignoreCase = true) }) {
+                        Text("New tag — it'll be saved for next time")
+                    }
+                },
+                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                 modifier = Modifier.fillMaxWidth(),
             )
-            ChipRow(categorySuggestions, category, { it }) { category = it }
+            ChipRow(tags, Tags.canonical(category, tags), { it }) {
+                category = if (category.trim().equals(it, ignoreCase = true)) "" else it
+            }
 
             Label("Status")
             ChipRow(Status.entries, status, { it.label }) { status = it }

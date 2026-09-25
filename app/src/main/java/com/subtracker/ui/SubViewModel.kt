@@ -30,6 +30,7 @@ class SubViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun save(sub: Subscription) = viewModelScope.launch {
+        Tags.add(getApplication(), sub.category)
         dao.upsert(sub)
         SubWidget().updateAll(getApplication())
     }
