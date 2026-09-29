@@ -42,10 +42,26 @@ matches on your package name plus signing certificate, so you need your own OAut
 3. **OAuth consent screen** → External → add the scope
    `https://www.googleapis.com/auth/drive.appdata` → add your own Google account under
    **Test users**.
-4. **Credentials → Create credentials → OAuth client ID → Android**:
+4. Get your debug signing fingerprint by **running** one of these in a terminal:
+
+   ```sh
+   gradle :app:signingReport                 # easiest; look for the SHA1 under "debug"
+   keytool -list -v -keystore ~/.android/debug.keystore        -alias androiddebugkey -storepass android -keypass android
+   ```
+
+   Either prints a line like `SHA1: 92:E3:9C:...:45:B1`. You want that colon-separated
+   value, not the command.
+5. **Credentials → Create credentials → OAuth client ID → Android**:
    - Package name: `com.subtracker`
-   - SHA-1: `keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android`
-5. Nothing to paste into the project. Build, run, **Settings → Account → Connect Google Drive**.
+   - SHA-1 certificate fingerprint: the value from step 4
+6. Nothing to paste back into the project — Google identifies the app by package name plus
+   fingerprint, so there is no client ID in the source. Build, run, then
+   **Settings → Account → Connect Google Drive**.
+
+The fingerprint is per-machine (`debug.keystore` is generated locally) and is not a secret —
+it comes from a certificate inside every APK you build. Building on a second computer, or
+signing a release, means a different SHA-1 and another Android OAuth client in the same
+project.
 
 Leave the consent screen in **Testing** status. `drive.appdata` counts as a sensitive scope,
 so a *published* app would need Google's verification review; in Testing, with yourself as a
