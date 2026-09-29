@@ -33,6 +33,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.layout.padding
 import androidx.glance.appwidget.updateAll
 import androidx.lifecycle.lifecycleScope
+import com.subtracker.sync.Sync
 import com.subtracker.widget.SubWidget
 import com.subtracker.widget.WidgetSettings
 import kotlinx.coroutines.launch
@@ -47,6 +48,7 @@ class MainActivity : ComponentActivity() {
         ThemeState.load(this)
         WidgetSettings.load(this)
         Tags.load(this)
+        Sync.load(this)
         setContent { SubTheme { App(vm) } }
     }
 
@@ -93,6 +95,7 @@ private fun MainScaffold(
 ) {
     val context = LocalContext.current
     var showTheme by rememberSaveable { mutableStateOf(false) }
+    var showAccount by rememberSaveable { mutableStateOf(false) }
 
     // Keep the widget in step with the chosen theme and widget settings.
     LaunchedEffect(
@@ -157,5 +160,11 @@ private fun MainScaffold(
         }
     }
 
-    if (showTheme) ThemePicker(onDismiss = { showTheme = false })
+    if (showTheme) {
+        ThemePicker(
+            onDismiss = { showTheme = false },
+            onAccount = { showTheme = false; showAccount = true },
+        )
+    }
+    if (showAccount) AccountDialog(onDismiss = { showAccount = false })
 }

@@ -17,6 +17,13 @@ interface SubDao {
     @Upsert
     suspend fun upsert(sub: Subscription)
 
+    /** Restore replaces the whole table; callers wrap both calls in one transaction. */
+    @Upsert
+    suspend fun upsertAll(subs: List<Subscription>)
+
+    @Query("DELETE FROM subscriptions")
+    suspend fun clear()
+
     @Delete
     suspend fun delete(sub: Subscription)
 }

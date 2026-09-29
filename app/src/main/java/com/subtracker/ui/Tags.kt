@@ -28,8 +28,13 @@ object Tags {
         context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
     fun load(context: Context) {
-        val raw = prefs(context).getString(KEY_CUSTOM, null) ?: return
-        custom = runCatching {
+        custom = customOf(context)
+    }
+
+    /** Read straight from disk — for callers off the main thread, such as backup. */
+    fun customOf(context: Context): List<String> {
+        val raw = prefs(context).getString(KEY_CUSTOM, null) ?: return emptyList()
+        return runCatching {
             val array = JSONArray(raw)
             List(array.length()) { array.getString(it) }
         }.getOrDefault(emptyList())

@@ -7,14 +7,18 @@ import androidx.lifecycle.viewModelScope
 import com.subtracker.data.AppDatabase
 import com.subtracker.data.Rates
 import com.subtracker.data.Subscription
+import com.subtracker.sync.Sync
 import com.subtracker.widget.SubWidget
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class SubViewModel(app: Application) : AndroidViewModel(app) {
     private val dao = AppDatabase.get(app).dao()
+    private var backup: Job? = null
 
     val subs: StateFlow<List<Subscription>> = dao.observeAll()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
@@ -33,10 +37,24 @@ class SubViewModel(app: Application) : AndroidViewModel(app) {
         Tags.add(getApplication(), sub.category)
         dao.upsert(sub)
         SubWidget().updateAll(getApplication())
+        backUp()
     }
 
     fun delete(sub: Subscription) = viewModelScope.launch {
         dao.delete(sub)
         SubWidget().updateAll(getApplication())
+        backUp()
+    }
+
+    /**
+     * Uploads after a change, coalescing a burst of edits into one push so editing
+     * three subscriptions in a row is one upload rather than three.
+     */
+    private fun backUp() {
+        backup?.cancel()
+        backup = viewModelScope.launch {
+            delay(3_000)
+            Sync.pushQuietly(getApplication())
+        }
     }
 }

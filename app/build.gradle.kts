@@ -47,4 +47,8 @@ dependencies {
 
     implementation("androidx.glance:glance-appwidget:1.1.0")
     implementation("androidx.glance:glance-material3:1.1.0")
+
+    // Drive authorisation only. The Drive calls themselves are plain REST over
+    // HttpURLConnection, so google-api-client (~10 MB, and a ProGuard fight) stays out.
+    implementation("com.google.android.gms:play-services-auth:22.0.0")
 }

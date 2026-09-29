@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
@@ -41,6 +42,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.subtracker.sync.Sync
+import com.subtracker.sync.SyncMode
 import com.subtracker.widget.WidgetSettings
 import com.subtracker.widget.WidgetTotal
 import com.subtracker.widget.nextPayday
@@ -48,7 +51,7 @@ import com.subtracker.widget.periodEnd
 import java.time.LocalDate
 
 @Composable
-fun ThemePicker(onDismiss: () -> Unit) {
+fun ThemePicker(onDismiss: () -> Unit, onAccount: () -> Unit) {
     val context = LocalContext.current
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -95,6 +98,20 @@ fun ThemePicker(onDismiss: () -> Unit) {
 
                 Spacer(Modifier.height(8.dp))
                 WidgetSection()
+
+                Spacer(Modifier.height(12.dp))
+                HorizontalDivider()
+                Spacer(Modifier.height(8.dp))
+                Text("Account", style = MaterialTheme.typography.labelLarge)
+                Spacer(Modifier.height(4.dp))
+                TextButton(onClick = onAccount, modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        when (Sync.mode) {
+                            SyncMode.LOCAL -> "This phone only — set up sync"
+                            SyncMode.GOOGLE -> Sync.account ?: "Google Drive"
+                        },
+                    )
+                }
             }
         },
     )
